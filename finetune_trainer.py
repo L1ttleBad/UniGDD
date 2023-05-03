@@ -42,7 +42,9 @@ class ModelArguments:
     """
     Arguments pertaining to which model/config/tokenizer we are going to fine-tune from.
     """
-
+    # local_rank, int = filed(
+    #     metadata={"help": "used for data parallel"}
+    # )
     model_name_or_path: str = field(
         metadata={"help": "Path to pretrained model or model identifier from huggingface.co/models"}
     )
@@ -156,7 +158,8 @@ def main():
         model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
     check_output_dir(training_args)
-
+    # training_args.report_to = []
+    #torch.cuda.set_device(model_args.local_rank)
     # Setup logging
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
@@ -188,6 +191,7 @@ def main():
         cache_dir=model_args.cache_dir,
     )
 
+
     # Get datasets
     train_dataset = (
         dataset_class(
@@ -198,6 +202,8 @@ def main():
             max_target_length=data_args.max_target_length,
             max_source_length=data_args.max_source_length,
         )
+        if training_args.do_train
+        else None
     )
 
     eval_dataset = (
@@ -238,7 +244,7 @@ def main():
     config.temp_end = model_args.temp_end
     config.scheduler = model_args.scheduler
     config.accumulation_steps = training_args.gradient_accumulation_steps
-    steps_per_epoch = len(train_dataset) // (training_args.per_device_train_batch_size * training_args.gradient_accumulation_steps)
+    steps_per_epoch = len(train_dataset) // (training_args.per_device_train_batch_size * training_args.gradient_accumulation_steps) if training_args.do_train else 0
     config.total_steps = steps_per_epoch * training_args.num_train_epochs
 
     extra_model_params = ("encoder_layerdrop", "decoder_layerdrop", "dropout", "attention_dropout")
@@ -256,7 +262,8 @@ def main():
     )
 
     if model_args.add_tokens:
-        special_tokens = ["<last_turn>", "<user>", "<agent>", "<grounding>"]
+        # special_tokens = ["<last_turn>", "<user>", "<agent>", "<grounding>"]
+        special_tokens = ["<last_turn>", "<user>", "<agent>", "<grounding>", "<title>","<full_doc>","<doc_context>"]
         tokenizer.add_tokens(special_tokens)
         model.resize_token_embeddings(len(tokenizer))
 

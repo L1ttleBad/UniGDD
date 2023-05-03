@@ -96,11 +96,17 @@ def build_compute_metrics_fn(task_name: str, tokenizer: PreTrainedTokenizer, out
         pred_str_subtask2 = []
         for x in pred_str:
             if "<grounding>" in x and "<agent>" in x:
+                assert 0, TODO
                 index1 = x.index("<grounding>")
                 index2 = x.index("<agent>")
                 pred_str_subtask1.append(x[index1+11: index2].strip())
                 pred_str_subtask2.append(x[index2+7:].strip())
+            elif  "agent>" in x:
+                index2 = x.index("agent>")
+                pred_str_subtask1.append(x[index2 + 6:].strip())
+                pred_str_subtask2.append(x[index2 + 6:].strip())
             else:
+                assert 0, TODO
                 x = x.replace("<grounding>", "")
                 x = x.replace("<agent>", "")
                 pred_str_subtask1.append(x)
@@ -108,12 +114,25 @@ def build_compute_metrics_fn(task_name: str, tokenizer: PreTrainedTokenizer, out
 
         label_str_subtask1 = []
         label_str_subtask2 = []
+        count = 0
         for x in label_str:
-            assert "<grounding>" in x and "<agent>" in x
-            index1 = x.index("<grounding>")
-            index2 = x.index("<agent>")
-            label_str_subtask1.append(x[index1+11: index2].strip())
-            label_str_subtask2.append(x[index2+7:].strip())
+            count += 1
+            if "grounding>" in x and "agent>" in x:
+                #assert 0, TODO
+                index1 = x.index("grounding>")
+                index2 = x.index("agent>")
+                label_str_subtask1.append(x[index1+10: index2].strip())
+                label_str_subtask2.append(x[index2+6:].strip())
+            elif "agent>" in x:
+                index2 = x.index("agent>")
+                label_str_subtask1.append('')
+                label_str_subtask2.append(x[index2 + 6:].strip())
+            else:
+
+                assert 0, count
+                # assert 0, 'eval data not include <agent> entry, check!'
+                label_str_subtask1.append('')
+                label_str_subtask2.append(x.strip())
 
         path = Path(output_dir).joinpath(f"{mode}_pred_label_subtask1.json")
         write_pred(pred_str_subtask1, label_str_subtask1, ids_path, path)
@@ -368,6 +387,7 @@ class Seq2SeqDataCollator:
         return shifted_input_ids
 
     def _encode(self, batch) -> Dict[str, torch.Tensor]:
+        #batch[0]['src_texts'] = batch[0]['src_texts'] + 'ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha ha '
         batch_encoding = self.tokenizer.prepare_seq2seq_batch(
             [x["src_texts"] for x in batch],
             tgt_texts=[x["tgt_texts"] for x in batch],

@@ -1,8 +1,9 @@
-CUDA_VISIBLE_DEVICES=0 \
-python finetune_trainer.py \
+#export ALL_PROXY=socks5://10.1.17.172:7890; export http_proxy=http://10.1.17.172:7890; export https_proxy=http://10.1.17.172:7890
+CUDA_VISIBLE_DEVICES=1,2 \
+python -m torch.distributed.launch --nproc_per_node=2 --master_port=35878 finetune_trainer.py \
   --data_dir ./task_all \
   --cache_dir ./cache \
-  --output_dir ./output/1/ \
+  --output_dir ./output/3/ \
   --num_train_epochs 5 \
   --model_name_or_path t5-base \
   --learning_rate 1e-4 \
@@ -14,9 +15,8 @@ python finetune_trainer.py \
   --add_tokens \
   --eval_beams 2 \
   --per_device_train_batch_size=1 \
-  --per_device_eval_batch_size=16 \
-  --gradient_accumulation_steps=4 \
-  --overwrite_output_dir \
+  --per_device_eval_batch_size=8 \
+  --gradient_accumulation_steps=8 \
   --max_source_length 2560 \
   --max_target_length 500 \
   --task translation \
@@ -28,4 +28,4 @@ python finetune_trainer.py \
   --save_total_limit 3 \
   --generation_max_length 500 \
   --generation_num_beams 2 \
-
+  --overwrite_output_dir 
